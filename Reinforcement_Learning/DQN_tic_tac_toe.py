@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-""" ref: https://mahowald.github.io/deep-tictactoe/"""
+""" 
+ref: https://mahowald.github.io/deep-tictactoe/
+實際運行發現效果不佳
+"""
 import gym
 from gym import spaces
 import random
@@ -37,8 +40,8 @@ class TicTacToe(gym.Env):
             one_hot_bd[9*self.board[i]+i] = 1
         return one_hot_bd
 
-    def seed(self, seed=None):
-        pass
+#    def seed(self, seed=None):
+#        pass
     
     def reset(self):
         self.current_player = 0
@@ -53,8 +56,14 @@ class TicTacToe(gym.Env):
                                 [2,4,6]]
         return self._one_hot_board()
     
+    def _rtn_state(self, reward, done, exp):
+        # move to the next player
+        self.current_player = 1 - self.current_player
+        return self._one_hot_board(), reward, done, exp
+        
+    
     def step(self, action):
-        exp = {"state": "in progress"}
+        exp = {"state": "in progress", "reason":""}
         
         reward = 0
         done = False
@@ -65,9 +74,29 @@ class TicTacToe(gym.Env):
             exp = {"state": "done", 
                    "reason":"Illegal move"}
             done = True
-            return self._one_hot_board(), reward, done, exp
+            return self._rtn_state(reward, done, exp)
         
         self.board[action] = self.current_player + 1
+        
+                 
+        # check if we won
+        #print('現在玩家',self.current_player)
+        for streak in self.winning_streaks:
+            #print(streak, self.board[streak])
+            if (self.board[streak] == self.current_player + 1).all():
+                reward = 1 # player wins!
+                exp = {"state": "in progress", 
+                       "reason": "{} has won".format(self.current_player)}
+                done = True
+                return self._rtn_state(reward, done, exp)
+                
+        # check if we tied
+        if (self.board != 0).all():
+            reward = 0
+            exp = {"state": "in progress", 
+                   "reason": "{} has tied".format(self.current_player)}
+            done = True
+            return self._rtn_state(reward, done, exp)
         
         # check if the other player can win on the next turn:
         for streak in self.winning_streaks:
@@ -78,25 +107,9 @@ class TicTacToe(gym.Env):
                 "state": "in progress", 
                 "reason": "{} can lose next turn".format(self.current_player)
                     }
-                
-        # check if we won
-        for streak in self.winning_streaks:
-            if (self.board[streak] == self.current_player + 1).all():
-                reward = 1 # player wins!
-                exp = {"state": "in progress", 
-                       "reason": "{} has won".format(self.current_player)}
-                done = True
-        # check if we tied, which is also a win
-        if (self.board != 0).all():
-            reward = 1
-            exp = {"state": "in progress", 
-                   "reason": "{} has tied".format(self.current_player)}
-            done = True
+                return self._rtn_state(reward, done, exp)
         
-        # move to the next player
-        self.current_player = 1 - self.current_player
-        
-        return self._one_hot_board(), reward, done, exp
+        return self._rtn_state(reward, done, exp)
     
     def render(self, mode="human"):
         print(self.board[0:3])
@@ -107,7 +120,8 @@ def bulid_model(states:int, actions:int):
     model = Sequential() #建立空的神經網路
     model.add(Flatten(input_shape = (1,states)))
     model.add(Dense(24, activation = 'relu'))
-    model.add(Dense(24, activation = 'relu'))    
+    model.add(Dense(24, activation = 'relu')) 
+    model.add(Dense(24, activation = 'relu'))
     model.add(Dense(actions, activation = 'linear'))
     return model
 
@@ -145,6 +159,7 @@ if __name__=='__main__':
         action = agent.forward(observation)
         observation, reward, done, exp = test_env.step(action)
         test_env.render()
+        print(exp['reason'])
         print("\n")
         step += 1
     
