@@ -1,0 +1,3 @@
+1. https://www.youtube.com/watch?v=vmkRMvhCW5c
+2. https://mofanpy.com/tutorials/machine-learning/reinforcement-learning/DQN1/ - 莫須python
+3. https://www.mdeditor.tw/pl/2e4d/zh-tw - TensorFlow 2.0 (九) – 強化學習 70行程式碼實戰 Policy Gradient
