@@ -13,8 +13,10 @@ import gym
 import numpy as np
 from tensorflow.keras import models, layers, optimizers
 
+STATE_DIM, ACTION_DIM = 4, 2
+
 def bulid_model():
-    STATE_DIM, ACTION_DIM = 4, 2
+    
     model = models.Sequential([
         layers.Dense(100, input_dim=STATE_DIM, activation='relu'),
         layers.Dropout(0.2), # 測試發現DropOut層設0.2似乎較容易訓練成功 
